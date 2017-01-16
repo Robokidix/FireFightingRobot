@@ -1,0 +1,15 @@
+from gopigo import *
+from time import sleep
+fwd()
+sleep(1.5)
+right()
+sleep(1)
+fwd()
+sleep(2)
+right()
+sleep(1)
+fwd()
+sleep(0.5)
+left()
+sleep(0.5)
+stop()
