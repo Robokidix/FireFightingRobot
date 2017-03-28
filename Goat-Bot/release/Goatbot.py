@@ -151,6 +151,8 @@ def search_candle():
         pass
     else:
         print("Task 5: The candle is NOT found")
+        print("Turn on the Red LED")
+        red_led_off()
         print("Task 5: Searching candle, rotating right 15")
         goatbot_right_rot(15)
         if check_flame_sensor_A()==1 and check_flame_sensor_AB()==1:
