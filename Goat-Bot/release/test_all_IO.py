@@ -34,10 +34,21 @@ print int(button)
 print "Button Reading: " + str(button)
 while True:
 	button = digitalRead(pin)
-	#print "Button Reading: " + str(button)
+	print "Button Reading: " + str(button)
 	if button==1:
 		break
-
+#test flame sensor A pin 20
+while True:
+	if RPi.GPIO.input(20) == RPi.GPIO.LOW:
+		print("flame detected A")
+		break;
+#test flame sensor B pin 21
+while True:
+	if RPi.GPIO.input(21) == RPi.GPIO.LOW:
+		print("flame detected B")
+		break;
+		
+	
 ### Turn on Red LED
 RPi.GPIO.output(16,True)
 time.sleep(2)

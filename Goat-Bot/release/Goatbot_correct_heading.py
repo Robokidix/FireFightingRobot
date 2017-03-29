@@ -28,11 +28,11 @@ DIST_2_F_WALL_CLOSE=15 #cm
 DIST_2_F_WALL_FAR=20 #cm
 DIST_2_L_WALL_FAR=20 #cm
 DIST_2_R_WALL_CLOSER=7 #this is new
-SERVOR_FRONT=90 #Teddybot 70
-SERVOR_RIGHT=160 #Teddybot 0
-SERVOR_LEFT=20 #Teddybot 140
+SERVOR_FRONT=70 #Teddybot 70
+SERVOR_RIGHT=0 #Teddybot 0
+SERVOR_LEFT=140 #Teddybot 140
 DELAY=0.5
-HIGHSPEED=50 #Teddybot 50; Goatbot 100
+HIGHSPEED=50 #Teddybot 50 Goatbot 100
 LOWSPEED=50
 
 CANDLE=0 #No flame: 0, Find flame: 1, Put off Candle: 2 :state machine
@@ -51,31 +51,32 @@ def main():
     
     #Correct Heading: task 2
     correct_heading() #not done yet
+'''
     CANDLE=0
     while CANDLE!=2:
-		for x in range(REPEAT):
-			#Read Flame Senor: task 3
-			if check_flame_sensor_A()==1:
-				print("Flame Sensor A see a Candle")
-				print("Turn on the Red LED")
-				red_led_on()
-				break
-			else:
-				#Searing Room: task 4: not done yet for 4th room
-				room_searching()
-		#Flame search: task 5
-		stop()#stop robot
-		if search_candle()==1:
-			CANDLE=1
-			#Extinguish Candle: task 6
-			if put_off_candle()==1:
-				print("Candle is put off!")
-				stop()#stop robot
-				CANDLE=2
-			else:
-				print("Candle is still ON.")
-		else:
-			CANDLE=0
+        for x in range(REPEAT):
+            #Read Flame Senor: task 3
+            if check_flame_sensor_A()==1:
+                print("Flame Sensor A see a Candle")
+                print("Turn on the Red LED")
+                red_led_on()
+                break
+            #Searing Room: task 4: not done yet for 4th room
+            room_searching()
+            #Flame search: task 5
+            stop()#stop robot
+            if search_candle()==1:
+                CANDLE=1
+                #Extinguish Candle: task 6
+                if put_off_candle()==1:
+                    print("Candle is put off!")
+                    stop()#stop robot
+                    CANDLE=2
+                else:
+                     print("Candle is still ON.")
+            else:
+                CANDLE=0
+'''
 
 #Wait Start Button Pressed: task 1
 def wait_start_button():
@@ -123,13 +124,13 @@ def correct_heading():
     servo(SERVOR_LEFT)
     time.sleep(DELAY)
     dist_left=us_dist(15)
-    print( "Distance to Front  Wall: {}cm".format(dist_left))
+    print( "Distance to left  Wall: {}cm".format(dist_left))
     servo(SERVOR_RIGHT)
     time.sleep(DELAY)
     dist_right=us_dist(15)
     print( "Distance to right Wall: {}cm".format(dist_right))
     
-    if dist_right >DIST_2_R_WALL_CLOSER and dist_left < DIST_2_L_WALL_FAR:
+    if dist_right > DIST_2_R_WALL_CLOSER and dist_left < DIST_2_L_WALL_FAR:
         print("Task 2 : Orietation B. Rotation right 90 Degree")
         goatbot_right_rot(90)
     
@@ -156,7 +157,7 @@ def check_flame_sensor():
 def search_candle():
     print("Task 5 Start: searching candle..")
     time.sleep(1)
-    if check_flame_sensor_A()==1 and check_flame_sensor_B()==1:
+    if check_flame_sensor_A()==1 and check_flame_sensor_AB()==1:
         print("Task 5: confirmed the candle is found")
         print("Turn on the Red LED")
         red_led_on()
@@ -167,7 +168,7 @@ def search_candle():
         red_led_off()
         print("Task 5: Searching candle, rotating right 15")
         goatbot_right_rot(15)
-        if check_flame_sensor_A()==1 and check_flame_sensor_A()==1:
+        if check_flame_sensor_A()==1 and check_flame_sensor_AB()==1:
             stop()
             print("Task 5: confirmed the candle is found")
             pass
@@ -175,7 +176,7 @@ def search_candle():
             goatbot_left_rot(30)
             print("Task 5: The candle is NOT found")
             print("Task 5: Searching candle, rotating left 30")
-            if check_flame_sensor_A()==1 and check_flame_sensor_A()==1:
+            if check_flame_sensor_A()==1 and check_flame_sensor_AB()==1:
                 stop()
                 print("Task 5: confirmed the candle is found")
                 pass
@@ -188,7 +189,6 @@ def search_candle():
 #extinguish Candle: task 6  
 def put_off_candle():
     distance_to_stop=10 #10cm
-    servo(SERVOR_FRONT) #aim distance sensor to front
     print("Task 6 Start: Putting off candle..")
     print("Task 6 : Fan is ON")
     turn_on_fan()
@@ -197,15 +197,15 @@ def put_off_candle():
         dist=us_dist(15)			#Find the distance of the object in front
         print "Dist:",dist,'cm'
         if dist<distance_to_stop:	#If the object is closer than the "distance_to_stop" distance, stop the GoPiGo
-			print "Stopping"
-			stop()					#Stop the GoPiGo
-			break
-			time.sleep(.1)
+		print "Stopping"
+		stop()					#Stop the GoPiGo
+		break
+        time.sleep(.1)
         goatbot_fwd()
     time.sleep(5)    
     turn_off_fan()
     print("Task 6 : Fan is off")
-    if check_flame_sensor_A()==1 and check_flame_sensor_A()==1:
+    if check_flame_sensor_A()==1 and check_flame_sensor_AB()==1:
         print("Task 6: Candle is STILL ON after 1st try")
         print("Task 6 : Fan is ON")
         turn_on_fan()
@@ -226,7 +226,7 @@ def put_off_candle():
         time.sleep(1)
         turn_off_fan()
         print("Task 6 : Fan is off")
-        if check_flame_sensor_A()==1 and check_flame_sensor_A()==1:
+        if check_flame_sensor_A()==1 and check_flame_sensor_AB()==1:
             print("Task 6: Candle is STILL ON after 2nd try")
             print("Task 6 : Fan is ON")
             turn_on_fan()
@@ -237,7 +237,7 @@ def put_off_candle():
             time.sleep(5)
             turn_off_fan()
             print("Task 6 : Fan is off")
-            if check_flame_sensor_A()==1 and check_flame_sensor_A()==1:
+            if check_flame_sensor_A()==1 and check_flame_sensor_AB()==1:
                 print("Task 6: Candle is STILL ON after 3rd try")
                 return 0
             else:
@@ -380,6 +380,20 @@ def goatbot_right_rot(degree):
     
  
 if __name__ == '__main__':
-    main()         
+    #main()
+    #correct_heading()
+    stop()
+    goatbot_right(5)
+    goatbot_left(5)
+    goatbot_right_rot(5)
+    goatbot_left_rot(5)
+    #stop()
+    #set_left_speed(30)
+    #set_right_speed(30+10)
+    #print(enc_read(1))
+    #print(enc_read(0)) 
+    #fwd_cm_wait(10)
+    #print(enc_read(1))
+    #print(enc_read(0))         
 		
 			
