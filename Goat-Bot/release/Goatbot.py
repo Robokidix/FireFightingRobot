@@ -28,13 +28,17 @@ DIST_2_F_WALL_CLOSE=15 #cm
 DIST_2_F_WALL_FAR=20 #cm
 DIST_2_L_WALL_FAR=20 #cm
 DIST_2_R_WALL_CLOSER=7 #this is new
-SERVOR_FRONT=90
-SERVOR_RIGHT=10
+SERVOR_FRONT=70 #Teddybot 70
+SERVOR_RIGHT=0 #Teddybot 0
+SERVOR_LEFT=140 #Teddybot 140
 DELAY=0.5
-HIGHTSPEED=100
+HIGHSPEED=50 #Teddybot 50; Goatbot 100
 LOWSPEED=50
 
 CANDLE=0 #No flame: 0, Find flame: 1, Put off Candle: 2 :state machine
+ROBOT_X=0
+ROBOT_Y=0
+ROBOT_HEADING=0
 
 def main():
     #Reset the robot: task 0
@@ -49,28 +53,29 @@ def main():
     correct_heading() #not done yet
     CANDLE=0
     while CANDLE!=2:
-        for x in range(REPEAT):
-            #Read Flame Senor: task 3
-            if check_flame_sensor_A()==1:
-                print("Flame Sensor A see a Candle")
-                print("Turn on the Red LED")
-                red_led_on()
-                break
-            #Searing Room: task 4: not done yet for 4th room
-            room_searching()
-            #Flame search: task 5
-            stop()#stop robot
-            if search_candle()==1:
-                CANDLE=1
-                #Extinguish Candle: task 6
-                if put_off_candle()==1:
-                    print("Candle is put off!")
-                    stop()#stop robot
-                    CANDLE=2
-                else:
-                     print("Candle is still ON.")
-            else:
-                CANDLE=0
+		for x in range(REPEAT):
+			#Read Flame Senor: task 3
+			if check_flame_sensor_A()==1:
+				print("Flame Sensor A see a Candle")
+				print("Turn on the Red LED")
+				red_led_on()
+				break
+			else:
+				#Searing Room: task 4: not done yet for 4th room
+				room_searching()
+		#Flame search: task 5
+		stop()#stop robot
+		if search_candle()==1:
+			CANDLE=1
+			#Extinguish Candle: task 6
+			if put_off_candle()==1:
+				print("Candle is put off!")
+				stop()#stop robot
+				CANDLE=2
+			else:
+				print("Candle is still ON.")
+		else:
+			CANDLE=0
 
 #Wait Start Button Pressed: task 1
 def wait_start_button():
@@ -110,6 +115,9 @@ print("Task 4 Done: searching room DONE")
      
 #Correct Heading: task 2				
 def correct_heading():
+    global ROBOT_X
+    global ROBOT_Y
+    global ROBOT_HEADING
     print("Task 2 Start: Correct heading..")
     time.sleep(1)
     servo(SERVOR_LEFT)
@@ -121,12 +129,16 @@ def correct_heading():
     dist_right=us_dist(15)
     print( "Distance to right Wall: {}cm".format(dist_right))
     
-    if dist_right < DIST_2_R_WALL_CLOSER and dist_left > DIST_2_L_WALL_FAR:
+    if dist_right >DIST_2_R_WALL_CLOSER and dist_left < DIST_2_L_WALL_FAR:
         print("Task 2 : Orietation B. Rotation right 90 Degree")
         goatbot_right_rot(90)
     
     else:
         print("Task 2 : Orietation A.")
+    #reset Robot heading, X, Y position
+    ROBOT_X=0
+    ROBOT_Y=0
+    ROBOT_HEADING=0    
     print("Task 2 Done: Correct heading DONE")
 
 #Read Flame Senor: task 3    
@@ -144,7 +156,7 @@ def check_flame_sensor():
 def search_candle():
     print("Task 5 Start: searching candle..")
     time.sleep(1)
-    if check_flame_sensor_A()==1 and check_flame_sensor_AB()==1:
+    if check_flame_sensor_A()==1 and check_flame_sensor_B()==1:
         print("Task 5: confirmed the candle is found")
         print("Turn on the Red LED")
         red_led_on()
@@ -155,7 +167,7 @@ def search_candle():
         red_led_off()
         print("Task 5: Searching candle, rotating right 15")
         goatbot_right_rot(15)
-        if check_flame_sensor_A()==1 and check_flame_sensor_AB()==1:
+        if check_flame_sensor_A()==1 and check_flame_sensor_A()==1:
             stop()
             print("Task 5: confirmed the candle is found")
             pass
@@ -163,7 +175,7 @@ def search_candle():
             goatbot_left_rot(30)
             print("Task 5: The candle is NOT found")
             print("Task 5: Searching candle, rotating left 30")
-            if check_flame_sensor_A()==1 and check_flame_sensor_AB()==1:
+            if check_flame_sensor_A()==1 and check_flame_sensor_A()==1:
                 stop()
                 print("Task 5: confirmed the candle is found")
                 pass
@@ -176,6 +188,7 @@ def search_candle():
 #extinguish Candle: task 6  
 def put_off_candle():
     distance_to_stop=10 #10cm
+    servo(SERVOR_FRONT) #aim distance sensor to front
     print("Task 6 Start: Putting off candle..")
     print("Task 6 : Fan is ON")
     turn_on_fan()
@@ -184,15 +197,15 @@ def put_off_candle():
         dist=us_dist(15)			#Find the distance of the object in front
         print "Dist:",dist,'cm'
         if dist<distance_to_stop:	#If the object is closer than the "distance_to_stop" distance, stop the GoPiGo
-		print "Stopping"
-		stop()					#Stop the GoPiGo
-		break
-        time.sleep(.1)
+			print "Stopping"
+			stop()					#Stop the GoPiGo
+			break
+			time.sleep(.1)
         goatbot_fwd()
     time.sleep(5)    
     turn_off_fan()
     print("Task 6 : Fan is off")
-    if check_flame_sensor_A()==1 and check_flame_sensor_AB()==1:
+    if check_flame_sensor_A()==1 and check_flame_sensor_A()==1:
         print("Task 6: Candle is STILL ON after 1st try")
         print("Task 6 : Fan is ON")
         turn_on_fan()
@@ -213,7 +226,7 @@ def put_off_candle():
         time.sleep(1)
         turn_off_fan()
         print("Task 6 : Fan is off")
-        if check_flame_sensor_A()==1 and check_flame_sensor_AB()==1:
+        if check_flame_sensor_A()==1 and check_flame_sensor_A()==1:
             print("Task 6: Candle is STILL ON after 2nd try")
             print("Task 6 : Fan is ON")
             turn_on_fan()
@@ -224,7 +237,7 @@ def put_off_candle():
             time.sleep(5)
             turn_off_fan()
             print("Task 6 : Fan is off")
-            if check_flame_sensor_A()==1 and check_flame_sensor_AB()==1:
+            if check_flame_sensor_A()==1 and check_flame_sensor_A()==1:
                 print("Task 6: Candle is STILL ON after 3rd try")
                 return 0
             else:
@@ -287,6 +300,25 @@ def check_button():
     print( "Button Reading: " + str(button))
     return button
 
+def update_robot_location(left_enc,right_enc):
+    global ROBOT_X
+    global ROBOT_Y
+    global ROBOT_HEADING
+    WHEEL_RAD = 3.25 # Wheels are ~6.5 cm diameter. 
+    CHASS_WID = 11.55 # Chassis is ~13.5 cm wide.
+    DL=left_enc/18*math.pi*2*WHEEL_RAD
+    DR=right_enc/18*math.pi*2*WHEEL_RAD
+    DT=(DL+DR)/2
+    theta=(DR-DL)/CHASS_WID
+    ROBOT_HEADING=ROBOT_HEADING+theta
+    DX=DT*math.sin(ROBOT_HEADING)
+    DY=DT*math.cos(ROBOT_HEADING)
+    DHEADING=math.degrees(theta)
+    ROBOT_X=ROBOT_X+DX
+    ROBOT_Y=ROBOT_Y+DY
+    print(DX,DY,DHEADING)
+    print(ROBOT_X,ROBOT_Y,math.degrees(ROBOT_HEADING))
+        
 #GoatBot special mvoing cmd
 #Because the wiring of motor is differnt to GoPiGo
 #left motor controlled by right motor signal
@@ -296,6 +328,7 @@ def goatbot_fwd():
     enc_tgt(1,1,9)
     fwd()
     time.sleep(1)
+    
 
 def goatbot_fwd_right():
     set_left_speed(HIGHSPEED+50)
@@ -315,26 +348,34 @@ def goatbot_fwd_left():
 
 def goatbot_left(degree):
     set_speed(HIGHSPEED)
+    if degree<10:
+		degree=10
     #Rotate left
-    left_deg(90)
+    left_deg(degree)
     time.sleep(2)
 
 def goatbot_right(degree):
     set_speed(HIGHSPEED)
+    if degree<10:
+		degree=10
     #Rotate right
-    right_deg(90)
+    right_deg(degree)
     time.sleep(2)
 
 def goatbot_left_rot(degree):
     set_speed(HIGHSPEED)
+    if degree<12:
+		degree=12
     #Rotate left both wheel
-    left_rot_deg(90)
+    left_rot_deg(degree)
     time.sleep(2)
 
 def goatbot_right_rot(degree):
     set_speed(HIGHSPEED)
+    if degree<12:
+		degree=12
     #Rotate right both wheel
-    right_rot_deg(90)
+    right_rot_deg(degree)
     time.sleep(2)
     
  

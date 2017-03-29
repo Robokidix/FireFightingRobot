@@ -41,9 +41,11 @@ def left_deg_wait(deg=None):
     if deg is not None:
         pulse= int(deg/DPR)
         enc_tgt(0,1,pulse)
+	#print(enc_read(1))
     left()
     while enc_read(1) < pulse:
 		pass
+	
 
 
 def right_deg(deg=None):
@@ -55,7 +57,7 @@ def right_deg(deg=None):
     '''
     if deg is not None:
         pulse= int(deg/DPR)
-        enc_tgt(0,1,pulse)
+        enc_tgt(1,0,pulse)
     right()
 
 def right_deg_wait(deg=None):
@@ -68,7 +70,7 @@ def right_deg_wait(deg=None):
     '''
     if deg is not None:
         pulse= int(deg/DPR)
-        enc_tgt(0,1,pulse)
+        enc_tgt(1,0,pulse)
     right()
     while enc_read(0) < pulse:
 		pass
@@ -82,7 +84,7 @@ def right_rot_deg(deg=None):
     '''
     if deg is not None:
         pulse= int(deg/DPR)/2
-        enc_tgt(0,1,pulse)
+        enc_tgt(1,1,pulse)
     right_rot()
 
 def right_rot_deg_wait(deg=None):
@@ -95,7 +97,7 @@ def right_rot_deg_wait(deg=None):
     '''
     if deg is not None:
         pulse= int(deg/DPR)/2
-        enc_tgt(0,1,pulse)
+        enc_tgt(1,1,pulse)
     right_rot()
     while enc_read(0) < pulse:
 		pass
@@ -109,7 +111,7 @@ def left_rot_deg(deg=None):
     '''
     if deg is not None:
         pulse= int(deg/DPR)/2
-        enc_tgt(0,1,pulse)
+        enc_tgt(1,1,pulse)
     left_rot()
 
 def left_rot_deg_wait(deg=None):
@@ -122,7 +124,7 @@ def left_rot_deg_wait(deg=None):
     '''
     if deg is not None:
         pulse= int(deg/DPR)/2
-        enc_tgt(0,1,pulse)
+        enc_tgt(1,1,pulse)
     left_rot()
     while enc_read(1) < pulse:
 		pass
@@ -137,6 +139,7 @@ def fwd_cm(dist=None):
         pulse = int(cm2pulse(dist))
         enc_tgt(1,1,pulse)
     fwd()
+    
 
 def fwd_cm_wait(dist=None):
     '''
