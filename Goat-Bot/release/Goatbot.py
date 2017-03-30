@@ -21,18 +21,26 @@ mode = "OUTPUT"
 a = pinMode(pin, mode)
 
 ### room searching parameters
-REPEAT=5
-DIST_2_R_WALL_CLOSE=10 #cm
-DIST_2_R_WALL_FAR=15 #cm
+REPEAT=50
+DIST_2_R_WALL_CLOSE=20 #cm
+DIST_2_R_WALL_FAR=25 #cm
+DIST_2_R_WALL_TOO_FAR=60 #cm
+
+DIST_2_F_WALL_CLOSE=15 #cm
+
+DIST_2_R_WALL_CLOSER=7 #this is new
+
+DIST_2_R_WALL_HEADING=20
+DIST_2_L_WALL_HEADING=20
+
 DIST_2_F_WALL_CLOSE=15 #cm
 DIST_2_F_WALL_FAR=20 #cm
-DIST_2_L_WALL_FAR=20 #cm
-DIST_2_R_WALL_CLOSER=7 #this is new
+
 SERVOR_FRONT=90 #Teddybot 70
 SERVOR_RIGHT=160 #Teddybot 0
 SERVOR_LEFT=20 #Teddybot 140
-DELAY=0.5
-HIGHSPEED=50 #Teddybot 50; Goatbot 100
+DELAY=1
+HIGHSPEED=80 #Teddybot 50; Goatbot 100
 LOWSPEED=50
 
 CANDLE=0 #No flame: 0, Find flame: 1, Put off Candle: 2 :state machine
@@ -87,31 +95,55 @@ def wait_start_button():
 
  #Searing Room: task 4
 def room_searching():
-    print("Task 4 Start: searching room..")    
+    print("Task 4 Start: searching room..")
     for x in range(1):
         time.sleep(1)
         servo(SERVOR_FRONT)
         time.sleep(DELAY)
         dist_front=us_dist(15)
+        time.sleep(DELAY)
+        dist_right=us_dist(15)
         print( "Distance to Front  Wall: {}cm".format(dist_front))
         servo(SERVOR_RIGHT)
+        time.sleep(DELAY)
+        dist_right=us_dist(15)
         time.sleep(DELAY)
         dist_right=us_dist(15)
         print( "Distance to right Wall: {}cm".format(dist_right))
         if dist_front > DIST_2_F_WALL_CLOSE:
 		if dist_right < DIST_2_R_WALL_FAR and dist_right > DIST_2_R_WALL_CLOSE:
+			print("move forward")
 			goatbot_fwd()
 		else:
 			if dist_right > DIST_2_R_WALL_FAR:
-				goatbot_fwd_right()
-			else: 
+				if dist_right>DIST_2_R_WALL_TOO_FAR:
+					print("find a cross")
+					goatbot_fwd()
+					goatbot_fwd()
+					print("fwd, turn 90, fwd")
+					goatbot_right_rot(90)
+					goatbot_fwd()
+				else:
+					print("move slightly right")
+					goatbot_fwd_right()
+			else:
+				print("move slight left") 
 				goatbot_fwd_left()
 	else:
-		#turn left 90 degree to avoid the front wall
-		stop()
-		goatbot_left_rot()
+		if dist_right < DIST_2_R_WALL_CLOSE:
+			goatbot_right_rot(30)
+			goatbot_fwd()
+		else:
+				#turn left 90 degree to avoid the front wall
+				print("rotate 90 degree")
+				stop()
+				goatbot_left_rot(90)
+			
 		
-print("Task 4 Done: searching room DONE")
+    print("Task 4 Done: searching room DONE")   
+    
+
+
      
 #Correct Heading: task 2				
 def correct_heading():
@@ -125,11 +157,11 @@ def correct_heading():
     dist_left=us_dist(15)
     print( "Distance to Front  Wall: {}cm".format(dist_left))
     servo(SERVOR_RIGHT)
-    time.sleep(DELAY)
+    time.sleep(DELAY+2)
     dist_right=us_dist(15)
     print( "Distance to right Wall: {}cm".format(dist_right))
     
-    if dist_right >DIST_2_R_WALL_CLOSER and dist_left < DIST_2_L_WALL_FAR:
+    if dist_right >DIST_2_R_WALL_HEADING and dist_left < DIST_2_L_WALL_HEADING:
         print("Task 2 : Orietation B. Rotation right 90 Degree")
         goatbot_right_rot(90)
     
@@ -326,60 +358,70 @@ def goatbot_fwd():
     set_speed(HIGHSPEED)
     #Move fwd half turn
     enc_tgt(1,1,9)
-    fwd()
-    time.sleep(1)
+    fwd_cm_wait(10)
+    #time.sleep(1)
     
 
 def goatbot_fwd_right():
-    set_left_speed(HIGHSPEED+50)
+    set_left_speed(HIGHSPEED)
     set_right_speed(HIGHSPEED)
+    right_rot_deg_wait(20)
     #Move fwd slightly right one turn
     enc_tgt(1,1,9)
-    fwd()
-    time.sleep(1)
+    fwd_cm_wait(10)
+    left_rot_deg_wait(20)
+    #time.sleep(1)
 
 def goatbot_fwd_left():
     set_left_speed(HIGHSPEED)
-    set_right_speed(HIGHSPEED+50)
+    set_right_speed(HIGHSPEED)
+    left_rot_deg_wait(20)
     #Move fwd slightly left one turn
     enc_tgt(1,1,9)
-    fwd()
-    time.sleep(1)
+    fwd_cm_wait(10)
+    right_rot_deg_wait(20)
+    #time.sleep(1)
 
 def goatbot_left(degree):
     set_speed(HIGHSPEED)
     if degree<10:
 		degree=10
     #Rotate left
-    left_deg(degree)
-    time.sleep(2)
+    left_deg_wait(degree)
+    #time.sleep(2)
 
 def goatbot_right(degree):
     set_speed(HIGHSPEED)
     if degree<10:
 		degree=10
     #Rotate right
-    right_deg(degree)
-    time.sleep(2)
+    right_deg_wait(degree)
+    #time.sleep(2)
 
 def goatbot_left_rot(degree):
     set_speed(HIGHSPEED)
     if degree<12:
 		degree=12
     #Rotate left both wheel
-    left_rot_deg(degree)
-    time.sleep(2)
+    left_rot_deg_wait(degree)
+    #time.sleep(2)
 
 def goatbot_right_rot(degree):
     set_speed(HIGHSPEED)
     if degree<12:
 		degree=12
     #Rotate right both wheel
-    right_rot_deg(degree)
-    time.sleep(2)
+    right_rot_deg_wait(degree)
+    #time.sleep(2)
+ 
+ #def goatbot_fwd_cm_wait(dist):
+	 #set_speed(HIGHSPEED)
+	 #fwd_cm_wait(dist)
+	
     
  
 if __name__ == '__main__':
-    main()         
+    main()
+    #room_searching()         
 		
 			

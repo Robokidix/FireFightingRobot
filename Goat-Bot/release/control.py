@@ -14,9 +14,9 @@ en_debug=1
 ## 360 roation is ~64 encoder pulses or 5 deg/pulse
 ## DPR is the Deg:Pulse Ratio or the # of degrees per
 ##  encoder pulse.
-DPR = 360.0/64
-WHEEL_RAD = 3.25 # Wheels are ~6.5 cm diameter. 
-CHASS_WID = 13.5 # Chassis is ~13.5 cm wide.
+DPR = 360.0/50 #360.0/64 goatbot
+WHEEL_RAD = 3 #3.25 # Wheels are ~6.5 cm diameter. 
+CHASS_WID = 9#13.5 # Chassis is ~13.5 cm wide.
 
 def left_deg(deg=None):
     '''
@@ -154,6 +154,10 @@ def fwd_cm_wait(dist=None):
     fwd()
     while enc_read(0) < pulse or enc_read(1) < pulse :
 		pass
+    #print(enc_read(0))
+    #print(enc_read(1))
+    
+	
 
 def bwd_cm(dist=None):
     '''
