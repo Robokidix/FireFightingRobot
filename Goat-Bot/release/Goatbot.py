@@ -5,6 +5,7 @@ import RPi.GPIO
 import math
 import time
 import sys
+import scan_room
 ### setup I/O
 import RPi.GPIO
 RPi.GPIO.setmode(RPi.GPIO.BCM)
@@ -23,8 +24,8 @@ a = pinMode(pin, mode)
 ### room searching parameters
 REPEAT=40
 DIST_2_R_WALL_CLOSE=15 #cm
-DIST_2_R_WALL_FAR=35 #cm
-DIST_2_R_WALL_TOO_FAR=60 #cm
+DIST_2_R_WALL_FAR=35-10 #cm
+DIST_2_R_WALL_TOO_FAR=50 #cm detect the cross can turn right
 
 DIST_2_F_WALL_CLOSE=28 #cm
 
@@ -37,9 +38,9 @@ DIST_2_L_WALL_HEADING=20
 DIST_2_F_WALL_FAR=20 #cm
 
 SERVOR_FRONT=90 #Teddybot 70
-SERVOR_RIGHT=160 #Teddybot 0
+SERVOR_RIGHT=155 #Teddybot 0
 SERVOR_LEFT=20 #Teddybot 140
-DELAY=2
+DELAY=0.5
 HIGHSPEED=80 #Teddybot 50; Goatbot 100
 LOWSPEED=50
 
@@ -70,7 +71,7 @@ def main():
 				break
 			else:
 				#Searing Room: task 4: not done yet for 4th room
-				room_searching()
+				room_searching_v2()
 		#Flame search: task 5
 		stop()#stop robot
 		if search_candle()==1:
@@ -102,12 +103,12 @@ def room_searching():
         servo(SERVOR_FRONT)
         time.sleep(DELAY)
         
-        dist_front=correct_dist()
+        dist_front=correct_dist(SERVOR_FRONT)
         print( "Distance to Front  Wall: {}cm".format(dist_front))
         servo(SERVOR_RIGHT)
         time.sleep(DELAY)
         
-        dist_right=correct_dist()
+        dist_right=correct_dist(SERVOR_RIGHT)
         print( "Distance to right Wall: {}cm".format(dist_right))
         rotation_angel=90
         if dist_front > DIST_2_F_WALL_CLOSE:
@@ -121,19 +122,19 @@ def room_searching():
         else:
 			 servo(SERVOR_LEFT)
 			 time.sleep(DELAY)
-			 dist_left=correct_dist()
+			 dist_left=correct_dist(SERVOR_LEFT)
 			 if dist_right > dist_left:
 				print("Find left corner or top: turn right")
 				goatbot_right_rot(rotation_angel)
 			 else:
 				 print("find right corner: turn left 60")
 				 goatbot_left_rot(rotation_angel)
-    print("Task 4 Done: searching room DONE")    
-    
+    print("Task 4 Done: searching room DONE")
+
 def follow_wall(dist_front,dist_right):
     if dist_right < DIST_2_R_WALL_FAR and dist_right > DIST_2_R_WALL_CLOSE:
         print("Robot in the mddile of hallway: move forward")
-        goatbot_fwd(20)
+        goatbot_fwd(15)
     else:
         if dist_right > DIST_2_R_WALL_FAR:
             print("Too FAR to Right Wall: move slightly right")
@@ -141,16 +142,88 @@ def follow_wall(dist_front,dist_right):
         else:
             print("Too Close to Right Wall: move slight left")
             goatbot_fwd_left()
+ 
+def room_searching_v2():
+    
+    print("Task 4 Start: searching room..")
+    for x in range(1):        
+        servo(SERVOR_RIGHT)
+        time.sleep(DELAY)        
+        dist_right=correct_dist(SERVOR_RIGHT)
+        print( "Distance to right Wall: {}cm".format(dist_right))
+        time.sleep(1)
+        servo(SERVOR_FRONT)
+        time.sleep(DELAY)        
+        dist_front=correct_dist(SERVOR_FRONT)
+        print( "Distance to Front  Wall: {}cm".format(dist_front))
+        
+        rotation_angel=90
+        if dist_front > DIST_2_F_WALL_CLOSE:
+            if dist_right<DIST_2_R_WALL_TOO_FAR:
+                follow_wall_v2(dist_front,dist_right)
+            else:
+                print("Find Cross, turn 60")
+                #follow_wall(dist_front,dist_right)
+                servo(SERVOR_FRONT)
+                time.sleep(0.2)
+                fwd_cm_wait_avoid(20,10)
+                #goatbot_fwd(20)
+                goatbot_right_rot(rotation_angel)
+                fwd_cm_wait_avoid(25,10)
+        else:
+			 servo(SERVOR_LEFT)
+			 time.sleep(DELAY)
+			 dist_left=correct_dist(SERVOR_LEFT)
+			 if dist_right > dist_left:
+				print("Find left corner or top: turn right")
+				goatbot_right_rot(rotation_angel-45)
+			 else:
+				 print("find right corner: turn left 60")
+				 goatbot_left_rot(rotation_angel-45)
+    print("Task 4 Done: searching room DONE")   
+    
+def follow_wall_v2(dist_front,dist_right):
+    if dist_right < DIST_2_R_WALL_FAR and dist_right > DIST_2_R_WALL_CLOSE:
+        print("Robot in the mddile of hallway: move forward")
+        set_speed(HIGHSPEED)
+        servo(SERVOR_FRONT)
+        time.sleep(0.2)
+        fwd_cm_wait_avoid(15,10)
+        #time.sleep(2)
+    else:
+        if dist_right > DIST_2_R_WALL_FAR:
+            print("Too FAR to Right Wall: move slightly right")
+            goatbot_fwd_right()
+        else:
+            print("Too Close to Right Wall: move slight left")
+            goatbot_fwd_left()
+           
         
         
 
-def correct_dist():
-	dist=us_dist(15)
-	while dist>300:
+def correct_dist(last_servo_position=None):
+	
+    dist=us_dist(15)
+    start_time=time.time();#if over 5 seconds getting invalid reading from us, move servor
+    if last_servo_position is None:
+		last_servo_position=90
+    while dist>300:
 		print("error in distance sensor reading, re-read")
 		time.sleep(0.1)
 		dist=us_dist(15)
-	return dist	
+		if time.time()-start_time>5:
+			servo(last_servo_position-5)
+			time.sleep(0.1)
+			dist_1=us_dist(15)
+			servo(last_servo_position+5)
+			time.sleep(0.1)
+			dist_2=us_dist(15)
+			if dist_1<300:
+				dist=dist_1
+			else:
+				if dist_2<300:
+					dist=dist_2
+    return dist	
 
      
 #Correct Heading: task 2				
@@ -241,7 +314,7 @@ def put_off_candle():
 			stop()					#Stop the GoPiGo
 			break
 			time.sleep(.1)
-        goatbot_fwd(5)
+        fwd_cm_wait_avoid(15,10)
     time.sleep(5)    
     turn_off_fan()
     print("Task 6 : Fan is off")
@@ -250,20 +323,11 @@ def put_off_candle():
         print("Task 6 : Fan is ON")
         turn_on_fan()
         print("Task 6: Rotating robot")
-        goatbot_right_rot(5)
-        time.sleep(1)
-        goatbot_right_rot(5)
-        time.sleep(1)
-        goatbot_right_rot(5)
-        time.sleep(1)
+        goatbot_right_rot(15)
+        time.sleep(1)        
         goatbot_left_rot(15)
         time.sleep(1)
-        goatbot_left_rot(5)
-        time.sleep(1)
-        goatbot_left_rot(5)
-        time.sleep(1)
-        goatbot_left_rot(5)
-        time.sleep(1)
+        goatbot_left_rot(15)        
         turn_off_fan()
         print("Task 6 : Fan is off")
         if check_flame_sensor_A()==1 and check_flame_sensor_A()==1:
@@ -273,7 +337,7 @@ def put_off_candle():
             print("Task 6: Closing to Candel")
             goatbot_right_rot(15)
             time.sleep(1)
-            goatbot_fwd()
+            fwd_cm_wait_avoid(15,5)
             time.sleep(5)
             turn_off_fan()
             print("Task 6 : Fan is off")
@@ -376,19 +440,25 @@ def goatbot_fwd_right():
     time.sleep(0.2)
     #right_deg_wait(30)
     pulse=4
-    enc_tgt(1,0,pulse+1)
+    enc_tgt(1,0,pulse+2)
     right()
-    while enc_read(0) < pulse:
+    start_time=time.time()
+    
+    while enc_read(0) < pulse and time.time()-start_time<5:
 		pass
     #Move fwd slightly right one turn
     set_speed(HIGHSPEED)
-    fwd_cm_wait(5)
+    servo(SERVOR_FRONT)
+    time.sleep(0.2)
+    fwd_cm_wait_avoid(5,10)
+    #fwd_cm_wait(5)
     stop()
     time.sleep(0.2)
     enc_tgt(0,1,pulse)
     set_speed(HIGHSPEED+20)
     left()
-    while enc_read(1) < pulse:
+    start_time=time.time()
+    while enc_read(1) < pulse and time.time()-start_time<5:
 		pass
     #left_deg_wait(30)
     #time.sleep(1)
@@ -399,19 +469,25 @@ def goatbot_fwd_left():
     time.sleep(0.2)
     #right_deg_wait(30)
     pulse=4
-    enc_tgt(0,1,pulse+1)
+    enc_tgt(0,1,pulse)
     left()
-    while enc_read(1) < pulse:
+    start_time=time.time()  #if take more than 10 (TIME_LIMIT) seconds
+    
+    while enc_read(1) < pulse and time.time()-start_time<5:
 		pass
     #Move fwd slightly right one turn
     set_speed(HIGHSPEED)
-    fwd_cm_wait(5)
+    servo(SERVOR_FRONT)
+    time.sleep(0.2)
+    fwd_cm_wait_avoid(5,10)
+    #fwd_cm_wait(5)
     stop()
     time.sleep(0.2)
     enc_tgt(1,0,pulse)
     set_speed(HIGHSPEED+20)
     right()
-    while enc_read(0) < pulse:
+    start_time=time.time()
+    while enc_read(0) < pulse and time.time()-start_time<5:
 		pass
 
 def goatbot_left(degree):
@@ -453,7 +529,35 @@ def goatbot_right_rot(degree):
     
  
 if __name__ == '__main__':
+    stop()
     main()
-    #room_searching()         
+    stop()
+    #set_speed(50)
+    #left_deg_wait(45)
+    #print("fwd")
+    #fwd()
+    #right_deg_wait(45)
+    #print("fwd")
+    #fwd()
+    #fwd_cm_wait(20)
+    #print("fwd")
+    #fwd()
+    #fwd_cm_wait_avoid(20, 20)
+    #print("fwd")
+    #fwd()
+    #left_rot_deg_wait(45)
+    #print("fwd")
+    #fwd()
+    #right_rot_deg_wait(45)
+    #print("fwd")
+    #fwd()
+    #stop()
+    #fwd_cm_wait_avoid(50,15)
+    #print(correct_dist(90))
+    #stop()
+    #for x in range(80):
+		#room_searching_v2()
+    #stop()
+    #print (scan_room.us_map(8))         
 		
 			

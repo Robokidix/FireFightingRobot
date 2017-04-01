@@ -5,6 +5,7 @@ import RPi.GPIO
 import math
 import time
 import sys
+import scan_room
 ### setup I/O
 import RPi.GPIO
 RPi.GPIO.setmode(RPi.GPIO.BCM)
@@ -254,23 +255,10 @@ def goatbot_right_rot(degree):
  
 if __name__ == '__main__':
     #main()
-    for x in range(100):
-        servo(SERVOR_FRONT)
-        time.sleep(DELAY)
-        dist_front=correct_dist()
-        print( "Distance to Front  Wall: {}cm".format(dist_front))
-        if dist_front>100:
-			#print("distance sensor error")
-			#break
-			print("..")
-        servo(SERVOR_RIGHT)
-        time.sleep(DELAY)
-        dist_right=correct_dist()
-        print( "Distance to right Wall: {}cm".format(dist_right))
-        if dist_right>100:
-			#print("distance sensor error")
-			#break
-			print("..")
+    print (scan_room.us_map(40))
+    print (scan_room.us_map(8))
+    
+ 
     
    
 			

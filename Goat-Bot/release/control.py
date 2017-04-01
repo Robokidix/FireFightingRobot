@@ -1,5 +1,6 @@
 #!/usr/bin/python
 '''
+IMPORTANT:this is for Goatbot only!!!
 This module contains convenience functions to simplify
 the coding of FireFighting contest tasks.
 
@@ -8,6 +9,7 @@ e.g. from gopigo.control import *
 '''
 
 from gopigo import *
+import time
 
 en_debug=1
 
@@ -17,6 +19,8 @@ en_debug=1
 DPR = 360.0/50 #360.0/64 goatbot
 WHEEL_RAD = 3 #3.25 # Wheels are ~6.5 cm diameter. 
 CHASS_WID = 9#13.5 # Chassis is ~13.5 cm wide.
+SAFE_DIST = 10 #Defaut safe front distance to the object. Set to avoid collision
+TIME_LIMIT = 5 #limit maximum time on move robot in wait function: solving robot stuck at a location.
 
 def left_deg(deg=None):
     '''
@@ -43,7 +47,8 @@ def left_deg_wait(deg=None):
         enc_tgt(0,1,pulse)
 	#print(enc_read(1))
     left()
-    while enc_read(1) < pulse:
+    start_time=time.time()  #if take more than 10 (TIME_LIMIT) seconds 
+    while enc_read(1) < pulse and time.time()-start_time<TIME_LIMIT:
 		pass
 	
 
@@ -72,7 +77,8 @@ def right_deg_wait(deg=None):
         pulse= int(deg/DPR)
         enc_tgt(1,0,pulse)
     right()
-    while enc_read(0) < pulse:
+    start_time=time.time()  #if take more than 10 (TIME_LIMIT) seconds
+    while enc_read(0) < pulse and time.time()-start_time<TIME_LIMIT:
 		pass
 
 def right_rot_deg(deg=None):
@@ -99,7 +105,8 @@ def right_rot_deg_wait(deg=None):
         pulse= int(deg/DPR)/2
         enc_tgt(1,1,pulse)
     right_rot()
-    while enc_read(0) < pulse:
+    start_time=time.time()  #if take more than 10 (TIME_LIMIT) seconds
+    while enc_read(0) < pulse and time.time()-start_time<TIME_LIMIT:
 		pass
 
 def left_rot_deg(deg=None):
@@ -126,7 +133,8 @@ def left_rot_deg_wait(deg=None):
         pulse= int(deg/DPR)/2
         enc_tgt(1,1,pulse)
     left_rot()
-    while enc_read(1) < pulse:
+    start_time=time.time()  #if take more than 10 (TIME_LIMIT) seconds
+    while enc_read(1) < pulse and time.time()-start_time<TIME_LIMIT:
 		pass
 
 def fwd_cm(dist=None):
@@ -152,11 +160,48 @@ def fwd_cm_wait(dist=None):
         pulse = int(cm2pulse(dist))
         enc_tgt(1,1,pulse)
     fwd()
-    while enc_read(0) < pulse or enc_read(1) < pulse :
+    start_time=time.time()  #if take more than 10 (TIME_LIMIT) seconds
+    while (enc_read(0) < pulse or enc_read(1) < pulse) and time.time()-start_time<TIME_LIMIT :
 		pass
     #print(enc_read(0))
     #print(enc_read(1))
-    
+  
+def fwd_cm_wait_avoid(dist=None,distance_to_stop=None):
+    '''
+    Move chassis fwd by a specified number of cm.
+    This function sets the encoder to the correct number
+     of pulses and then invokes fwd().
+     Block the program until movement finish
+    '''
+    if dist is not None:
+        pulse = int(cm2pulse(dist))
+        enc_tgt(1,1,pulse)
+    fwd()
+    if distance_to_stop is None:
+        distance_to_stop=SAFE_DIST
+    else:
+        pass
+    start_time=time.time()  #if take more than 10 (TIME_LIMIT) seconds
+    while (enc_read(0) < pulse or enc_read(1) < pulse) and time.time()-start_time<TIME_LIMIT :
+        dist=us_dist(15)
+        if dist<distance_to_stop:
+            stop()
+            break
+        pass
+    #print(enc_read(0))
+    #print(enc_read(1))
+
+def fwd_time_avoid(time_to_move,distance_to_stop=None):
+   
+    fwd()
+    if distance_to_stop is None:
+        distance_to_stop=SAFE_DIST
+    start_time=time.time()
+    while time.time()-start_time<time_to_move:   
+		if dist<distance_to_stop:
+			stop()
+	
+   
 	
 
 def bwd_cm(dist=None):
