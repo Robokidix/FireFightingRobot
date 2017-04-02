@@ -10,6 +10,8 @@ e.g. from gopigo.control import *
 
 from gopigo import *
 import time
+import GoatbotV3
+
 
 en_debug=1
 
@@ -48,7 +50,7 @@ def left_deg_wait(deg=None):
 	#print(enc_read(1))
     left()
     start_time=time.time()  #if take more than 10 (TIME_LIMIT) seconds 
-    while enc_read(1) < pulse and time.time()-start_time<TIME_LIMIT:
+    while enc_read(1) < pulse and time.time()-start_time<TIME_LIMIT and GoatbotV3.check_flame_sensor_A()!=1:
 		pass
 	
 
@@ -78,7 +80,7 @@ def right_deg_wait(deg=None):
         enc_tgt(1,0,pulse)
     right()
     start_time=time.time()  #if take more than 10 (TIME_LIMIT) seconds
-    while enc_read(0) < pulse and time.time()-start_time<TIME_LIMIT:
+    while enc_read(0) < pulse and time.time()-start_time<TIME_LIMIT and GoatbotV3.check_flame_sensor_A()!=1:
 		pass
 
 def right_rot_deg(deg=None):
@@ -93,7 +95,7 @@ def right_rot_deg(deg=None):
         enc_tgt(1,1,pulse)
     right_rot()
 
-def right_rot_deg_wait(deg=None):
+def right_rot_deg_wait(deg=None,no_flame_sensor=None):
     '''
     Turn chassis right by a specified number of degrees.
     DPR is the #deg/pulse (Deg:Pulse ratio)
@@ -105,8 +107,11 @@ def right_rot_deg_wait(deg=None):
         pulse= int(deg/DPR)/2
         enc_tgt(1,1,pulse)
     right_rot()
+    flame_sensor_reading=GoatbotV3.check_flame_sensor_A()
+    if no_flame_sensor is not None:
+		flame_sensor_reading=0
     start_time=time.time()  #if take more than 10 (TIME_LIMIT) seconds
-    while enc_read(0) < pulse and time.time()-start_time<TIME_LIMIT:
+    while enc_read(0) < pulse and time.time()-start_time<TIME_LIMIT and flame_sensor_reading!=1:
 		pass
 
 def left_rot_deg(deg=None):
@@ -121,7 +126,7 @@ def left_rot_deg(deg=None):
         enc_tgt(1,1,pulse)
     left_rot()
 
-def left_rot_deg_wait(deg=None):
+def left_rot_deg_wait(deg=None, no_flame_sensor=None):
     '''
     Turn chassis right by a specified number of degrees.
     DPR is the #deg/pulse (Deg:Pulse ratio)
@@ -133,8 +138,11 @@ def left_rot_deg_wait(deg=None):
         pulse= int(deg/DPR)/2
         enc_tgt(1,1,pulse)
     left_rot()
+    flame_sensor_reading=GoatbotV3.check_flame_sensor_A()
+    if no_flame_sensor is not None:
+		flame_sensor_reading=0
     start_time=time.time()  #if take more than 10 (TIME_LIMIT) seconds
-    while enc_read(1) < pulse and time.time()-start_time<TIME_LIMIT:
+    while enc_read(1) < pulse and time.time()-start_time<TIME_LIMIT and flame_sensor_reading!=1:
 		pass
 
 def fwd_cm(dist=None):
@@ -161,12 +169,12 @@ def fwd_cm_wait(dist=None):
         enc_tgt(1,1,pulse)
     fwd()
     start_time=time.time()  #if take more than 10 (TIME_LIMIT) seconds
-    while (enc_read(0) < pulse or enc_read(1) < pulse) and time.time()-start_time<TIME_LIMIT :
+    while (enc_read(0) < pulse or enc_read(1) < pulse) and time.time()-start_time<TIME_LIMIT and GoatbotV3.check_flame_sensor_A()!=1 :
 		pass
     #print(enc_read(0))
     #print(enc_read(1))
   
-def fwd_cm_wait_avoid(dist=None,distance_to_stop=None):
+def fwd_cm_wait_avoid(dist=None,distance_to_stop=None, no_flame_sensor=None):
     '''
     Move chassis fwd by a specified number of cm.
     This function sets the encoder to the correct number
@@ -181,8 +189,11 @@ def fwd_cm_wait_avoid(dist=None,distance_to_stop=None):
         distance_to_stop=SAFE_DIST
     else:
         pass
+    flame_sensor_reading=GoatbotV3.check_flame_sensor_A()
+    if no_flame_sensor is not None:
+		flame_sensor_reading=0
     start_time=time.time()  #if take more than 10 (TIME_LIMIT) seconds
-    while (enc_read(0) < pulse or enc_read(1) < pulse) and time.time()-start_time<TIME_LIMIT :
+    while (enc_read(0) < pulse or enc_read(1) < pulse) and time.time()-start_time<TIME_LIMIT and flame_sensor_reading!=1 :
         dist=us_dist(15)
         if dist<distance_to_stop:
             stop()
@@ -226,7 +237,7 @@ def bwd_cm_wait(dist=None):
         pulse = int(cm2pulse(dist))
         enc_tgt(1,1,pulse)
     bwd()
-    while enc_read(0) < pulse or enc_read(1) < pulse :
+    while enc_read(0) < pulse or enc_read(1) < pulse and GoatbotV3.check_flame_sensor_A()!=1 :
 		pass
 
 def cm2pulse(dist):
